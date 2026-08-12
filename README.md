@@ -11,7 +11,7 @@ An academic, portfolio-ready incident response project built on two authorized p
 
 The complete project demonstration video is available in the final release:
 
-[🎥 Watch / Download Project Demo][((https://github.com/alswaitiayham-byte/Integrated-Two-Device-Incident-Response-Lab/releases/tag/v1.0))]
+[🎥 Watch / Download Project Demo][(https://github.com/alswaitiayham-byte/Integrated-Two-Device-Incident-Response-Lab/releases/tag/v1.0)]
 
 ## What this project demonstrates
 
