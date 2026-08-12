@@ -1,0 +1,59 @@
+<form version="1.1" theme="light">
+  <label>Integrated Incident Response Lab</label>
+  <description>Safe-simulation authentication, file, process, and network evidence.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Failed authentication by source</title>
+      <table>
+        <search>
+          <query>index=ir_lab ("Failed password" OR "event=failed_login") | rex field=_raw "(?:from\s+|src_ip=)(?&lt;src_ip&gt;\d{1,3}(?:\.\d{1,3}){3})" | stats count earliest(_time) as first_seen latest(_time) as last_seen by src_ip | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <title>Event types over time</title>
+      <chart>
+        <search>
+          <query>index=ir_lab | eval event_type=case(searchmatch("failed_login") OR searchmatch("Failed password"),"failed_login",searchmatch("login_success") OR searchmatch("Accepted password"),"login_success",searchmatch("sensitive_file") OR searchmatch("ir_sensitive"),"file_change",searchmatch("benign_process_started"),"process",searchmatch("ioc_marker"),"ioc_marker",true(),"other") | timechart span=1m count by event_type</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Protected-file activity</title>
+      <table>
+        <search>
+          <query>index=ir_lab ("ir_sensitive" OR "sensitive_file_modified" OR "/opt/ir-lab/sensitive") | table _time host sourcetype user process path _raw | sort _time</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Chronological incident evidence</title>
+      <table>
+        <search>
+          <query>index=ir_lab | sort 0 _time | table _time host source sourcetype _raw</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>

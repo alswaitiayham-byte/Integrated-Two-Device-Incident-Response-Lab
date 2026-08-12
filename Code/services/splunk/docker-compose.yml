@@ -1,0 +1,33 @@
+services:
+  splunk:
+    image: "${SPLUNK_IMAGE:-splunk/splunk:10.4.2}"
+    container_name: ayham-ir-splunk
+    hostname: ayham-ir-splunk
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18000:8000"
+    environment:
+      SPLUNK_START_ARGS: "${SPLUNK_START_ARGS:-NOT_ACCEPTED}"
+      SPLUNK_GENERAL_TERMS: "${SPLUNK_GENERAL_TERMS:-NOT_ACCEPTED}"
+      SPLUNK_PASSWORD: "${SPLUNK_PASSWORD:-Run_the_supplied_start_script}"
+      # The course app is intentionally bind-mounted read-only below. Disable
+      # recursive SPLUNK_HOME chown so provisioning does not try to modify it.
+      SPLUNK_HOME_OWNERSHIP_ENFORCEMENT: "false"
+    volumes:
+      - splunk_etc:/opt/splunk/etc
+      - splunk_var:/opt/splunk/var
+      - ../../lab/splunk/IR_Project_App:/opt/splunk/etc/apps/IR_Project_App:ro
+      - ../../sample_data:/opt/ir-sample-data:ro
+    mem_limit: 5g
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/splunk/bin/splunk status --accept-license >/dev/null 2>&1"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+volumes:
+  splunk_etc:
+    name: ayham_ir_splunk_etc
+  splunk_var:
+    name: ayham_ir_splunk_var

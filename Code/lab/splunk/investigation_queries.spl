@@ -1,0 +1,40 @@
+## 1. Dataset and host coverage
+index=ir_lab
+| stats count earliest(_time) AS first_seen latest(_time) AS last_seen BY host sourcetype
+| convert ctime(first_seen) ctime(last_seen)
+| sort host sourcetype
+
+## 2. Repeated failed authentication
+index=ir_lab ("Failed password" OR "event=failed_login")
+| rex field=_raw "(?:from\s+|src_ip=)(?<src_ip>\d{1,3}(?:\.\d{1,3}){3})"
+| rex field=_raw "(?:invalid user\s+|user=)(?<target_user>[A-Za-z0-9._-]+)"
+| bin _time span=5m
+| stats count values(target_user) AS target_users earliest(_time) AS first_seen latest(_time) AS last_seen BY _time src_ip
+| where count >= 5
+| convert ctime(first_seen) ctime(last_seen)
+
+## 3. Successful login following failures from the same source
+index=ir_lab ("Failed password" OR "Accepted password" OR "event=failed_login" OR "event=login_success")
+| rex field=_raw "(?:from\s+|src_ip=)(?<src_ip>\d{1,3}(?:\.\d{1,3}){3})"
+| eval result=case(searchmatch("Failed password") OR searchmatch("event=failed_login"),"failure",searchmatch("Accepted password") OR searchmatch("event=login_success"),"success",true(),"other")
+| transaction src_ip maxspan=15m startswith=result="failure" endswith=result="success"
+| table _time src_ip duration eventcount result _raw
+
+## 4. Sensitive-file activity
+index=ir_lab ("ir_sensitive" OR "sensitive_file_modified" OR "/opt/ir-lab/sensitive")
+| rex field=_raw "(?:name=|path=)\"?(?<path>/[^\s\"]+)"
+| table _time host user process path sourcetype _raw
+| sort _time
+
+## 5. Processes and network observables
+index=ir_lab ("benign_process_started" OR "loopback_connection" OR "ioc_marker_created")
+| rex field=_raw "(?:process=)(?<process>[^\s]+)"
+| rex field=_raw "(?:destination=|value=)(?<destination>[^\s]+)"
+| table _time host process destination _raw
+| sort _time
+
+## 6. Complete timeline export
+index=ir_lab
+| eval message=_raw, datetime=strftime(_time,"%Y-%m-%dT%H:%M:%S%z"), timestamp_desc="Event time"
+| table datetime timestamp_desc host source sourcetype message
+| sort datetime

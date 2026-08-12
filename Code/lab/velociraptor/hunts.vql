@@ -1,0 +1,26 @@
+-- Query 1: Process inventory (cross-platform, read-only)
+SELECT now() AS CollectionTime,
+       Pid, Ppid, Name, Exe, CommandLine, Username
+FROM pslist()
+
+-- Query 2: Network inventory (cross-platform where supported, read-only)
+SELECT now() AS CollectionTime, *
+FROM netstat()
+
+-- Query 3: Hash the simulation evidence files on Linux
+SELECT now() AS CollectionTime,
+       OSPath, Size, Mtime,
+       hash(path=OSPath) AS Hashes
+FROM glob(globs="/opt/ir-lab/evidence/**")
+WHERE NOT IsDir
+
+-- Query 4: Collect only labelled simulation lines from Linux
+SELECT now() AS CollectionTime, Line
+FROM parse_lines(filename="/var/log/ir-lab-simulation.log")
+WHERE Line =~ "SAFE-SIMULATION"
+
+-- Query 5: Locate the harmless demonstration process
+SELECT now() AS CollectionTime,
+       Pid, Ppid, Name, Exe, CommandLine
+FROM pslist()
+WHERE CommandLine =~ "http.server 8088" OR Name =~ "python"

@@ -1,0 +1,4 @@
+<nav search_view="search" color="#7a0000">
+  <view name="incident_response_lab" default="true" />
+  <view name="search" />
+</nav>
