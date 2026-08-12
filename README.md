@@ -7,6 +7,12 @@ An academic, portfolio-ready incident response project built on two authorized p
 **Course:** Special Topics in Information Security  
 **Domain:** Incident Response
 
+## 🎥 Project Demonstration
+
+The complete project demonstration video is available in the final release:
+
+[🎥 Watch / Download Project Demo](رابط الـRelease)
+
 ## What this project demonstrates
 
 * Remote endpoint visibility with Velociraptor.
